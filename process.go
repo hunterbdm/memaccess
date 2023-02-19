@@ -85,6 +85,8 @@ func getProcessID(process string) (uint32, error) {
 		szExeFile string
 	)
 
+	pe32.Size = uint32(unsafe.Sizeof(pe32))
+
 	handle, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPALL, 0)
 	if err != nil {
 		return 0, err

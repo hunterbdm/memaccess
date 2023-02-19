@@ -92,7 +92,7 @@ func getProcessID(process string) (uint32, error) {
 		return 0, err
 	}
 
-	for err := windows.Process32First(handle, &pe32); err != nil; err = windows.Process32Next(handle, &pe32) {
+	for err := windows.Process32First(handle, &pe32); err == nil; err = windows.Process32Next(handle, &pe32) {
 		szExeFile = parseint8(toint8(pe32.ExeFile[:]))
 
 		if szExeFile == process {

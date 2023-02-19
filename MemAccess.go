@@ -33,31 +33,38 @@ func NewMemAccess(process, module string) (*MemAccess, error) {
 	}, nil
 }
 
-// ReadPointer32 reads a 32-bit pointer from the process memory.
-func (m *MemAccess) ReadPointer32(address uintptr) (uintptr, error) {
-	v, err := m.ReadCustom(address, uint32(0))
-	if err != nil {
-		return 0x0, err
-	}
-	return uintptr(v.(uint32)), nil
+// Read reads a custom value/size from the process memory.
+func (m *MemAccess) Read(address uintptr, resultPtr unsafe.Pointer, size uintptr) error {
+	return windows.ReadProcessMemory(m.Proc.Handle, address, (*byte)(resultPtr), size, &size)
 }
 
-// ReadUInt32 reads a 32-bit unsigned integer from the process memory.
-func (m *MemAccess) ReadUInt32(address uintptr) (uint32, error) {
-	v, err := m.ReadCustom(address, uint32(0))
-	if err != nil {
-		return 0x0, err
-	}
-	return v.(uint32), err
+// Write writes a custom value to the process memory.
+func (m *MemAccess) Write(address uintptr, valuePtr unsafe.Pointer, size uintptr) error {
+	return windows.WriteProcessMemory(m.Proc.Handle, address, (*byte)(valuePtr), size, &size)
 }
 
 // ReadByte reads a byte from the process memory.
 func (m *MemAccess) ReadByte(address uintptr) (byte, error) {
-	v, err := m.ReadCustom(address, byte(0))
-	if err != nil {
-		return 0x0, err
+	var result byte
+	if err := m.Read(address, unsafe.Pointer(&result), unsafe.Sizeof(result)); err != nil {
+		return 0, nil
 	}
-	return v.(byte), err
+	return result, nil
+}
+
+// ReadUInt32 reads a 32-bit unsigned integer from the process memory.
+func (m *MemAccess) ReadUInt32(address uintptr) (uint32, error) {
+	var result uint32
+	if err := m.Read(address, unsafe.Pointer(&result), unsafe.Sizeof(result)); err != nil {
+		return 0, nil
+	}
+	return result, nil
+}
+
+// ReadPointer32 reads a 32-bit pointer from the process memory.
+func (m *MemAccess) ReadPointer32(address uintptr) (uintptr, error) {
+	v, err := m.ReadUInt32(address)
+	return uintptr(v), err
 }
 
 // ReadPointerChain reads a pointer from a chain of offsets from the process memory.
@@ -80,31 +87,12 @@ func (m *MemAccess) ReadPointerChain(chain ...uintptr) uintptr {
 	return lastPtr + chain[len(chain)-1]
 }
 
-// ReadCustom reads a custom value from the process memory.
-func (m *MemAccess) ReadCustom(address uintptr, valueType any) (any, error) {
-	var (
-		value    = valueType
-		valuePtr = (*byte)(unsafe.Pointer(&value))
-		size     = unsafe.Sizeof(valueType)
-	)
-
-	if err := windows.ReadProcessMemory(m.Proc.Handle, address, valuePtr, size, &size); err != nil {
-		return nil, err
-	}
-
-	return value, nil
+// WriteByte writes a byte to the process memory.
+func (m *MemAccess) WriteByte(address uintptr, value byte) error {
+	return m.Write(address, unsafe.Pointer(&value), unsafe.Sizeof(value))
 }
 
-// Write writes a custom value to the process memory.
-func (m *MemAccess) Write(offset uintptr, value any) error {
-	var (
-		valuePtr = (*byte)(unsafe.Pointer(&value))
-		size     = unsafe.Sizeof(value)
-	)
-
-	if err := windows.WriteProcessMemory(m.Proc.Handle, offset, valuePtr, size, &size); err != nil {
-		return err
-	}
-
-	return nil
+// WriteUInt32 writes a 32-bit unsigned integer to the process memory.
+func (m *MemAccess) WriteUInt32(address uintptr, value uint32) error {
+	return m.Write(address, unsafe.Pointer(&value), unsafe.Sizeof(value))
 }

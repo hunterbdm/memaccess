@@ -3,6 +3,7 @@ package memaccess
 import (
 	"errors"
 	"golang.org/x/sys/windows"
+	"syscall"
 	"unsafe"
 )
 
@@ -93,7 +94,7 @@ func getProcessID(process string) (uint32, error) {
 	}
 
 	for err := windows.Process32First(handle, &pe32); err == nil; err = windows.Process32Next(handle, &pe32) {
-		szExeFile = parseint8(toint8(pe32.ExeFile[:]))
+		syscall.UTF16ToString(pe32.ExeFile[:])
 
 		if szExeFile == process {
 			return pe32.ProcessID, nil

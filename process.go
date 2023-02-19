@@ -29,7 +29,7 @@ func (p *process) getModule(module string) (uintptr, error) {
 	me32.Size = uint32(unsafe.Sizeof(me32))
 
 	for err := windows.Module32First(snap, &me32); err != nil; err = windows.Module32Next(snap, &me32) {
-		szModule = parseint8(toint8(me32.Module[:]))
+		szModule = syscall.UTF16ToString(me32.Module[:])
 
 		if szModule == module {
 			return me32.ModBaseAddr, nil
@@ -94,7 +94,7 @@ func getProcessID(process string) (uint32, error) {
 	}
 
 	for err := windows.Process32First(handle, &pe32); err == nil; err = windows.Process32Next(handle, &pe32) {
-		syscall.UTF16ToString(pe32.ExeFile[:])
+		szExeFile = syscall.UTF16ToString(pe32.ExeFile[:])
 
 		if szExeFile == process {
 			return pe32.ProcessID, nil

@@ -36,18 +36,27 @@ func NewMemAccess(process, module string) (*MemAccess, error) {
 // ReadPointer32 reads a 32-bit pointer from the process memory.
 func (m *MemAccess) ReadPointer32(address uintptr) (uintptr, error) {
 	v, err := m.ReadCustom(address, uint32(0))
-	return uintptr(v.(uint32)), err
+	if err != nil {
+		return 0x0, err
+	}
+	return uintptr(v.(uint32)), nil
 }
 
 // ReadUInt32 reads a 32-bit unsigned integer from the process memory.
 func (m *MemAccess) ReadUInt32(address uintptr) (uint32, error) {
 	v, err := m.ReadCustom(address, uint32(0))
+	if err != nil {
+		return 0x0, err
+	}
 	return v.(uint32), err
 }
 
 // ReadByte reads a byte from the process memory.
 func (m *MemAccess) ReadByte(address uintptr) (byte, error) {
 	v, err := m.ReadCustom(address, byte(0))
+	if err != nil {
+		return 0x0, err
+	}
 	return v.(byte), err
 }
 
@@ -74,7 +83,7 @@ func (m *MemAccess) ReadPointerChain(chain ...uintptr) uintptr {
 // ReadCustom reads a custom value from the process memory.
 func (m *MemAccess) ReadCustom(address uintptr, valueType any) (any, error) {
 	var (
-		value    any
+		value    = valueType
 		valuePtr = (*byte)(unsafe.Pointer(&value))
 		size     = unsafe.Sizeof(valueType)
 	)

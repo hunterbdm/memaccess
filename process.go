@@ -28,7 +28,7 @@ func (p *process) getModule(module string) (uintptr, error) {
 
 	me32.Size = uint32(unsafe.Sizeof(me32))
 
-	for err := windows.Module32First(p.Handle, &me32); err != nil; err = windows.Module32Next(snap, &me32) {
+	for err := windows.Module32First(p.Handle, &me32); err == nil; err = windows.Module32Next(snap, &me32) {
 		szModule = syscall.UTF16ToString(me32.Module[:])
 
 		if szModule == module {
